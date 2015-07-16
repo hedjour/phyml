@@ -164,6 +164,10 @@ void Usage()
   PhyML_Printf("\t\tIt is compulsory to use this option when analysing amino acid sequences with the `custom' model.\n");
   PhyML_Printf("\n");
 
+  PhyML_Printf("%s\n\t--xml %sXMLfilename%s\n",BOLD,LINE,FLAT);
+  PhyML_Printf("\t\t%sXMLfilename%s is the name of the file that provides the model in XML format usefull for LG4M or LG4X models.\n",LINE,FLAT);
+  PhyML_Printf("\t\tFor information how to write this file please see the section 8.4 from the documentation.\n");
+  PhyML_Printf("\n");
 
   #ifndef PHYTIME
   PhyML_Printf("%s\n\t-f %se%s, %sm%s, or %sfA,fC,fG,fT%s\n",BOLD,LINE,BOLD,LINE,BOLD,LINE,FLAT);
