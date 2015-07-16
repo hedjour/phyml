@@ -1,5 +1,5 @@
-#ifndef SERGEII_H
-#define SERGEII_H
+#ifndef INVITEE_H
+#define INVITEE_H
 
 #include "utilities.h"
 

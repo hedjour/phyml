@@ -11,7 +11,7 @@
 #include "pars.h"
 #include "alrt.h"
 #include "mixt.h"
-#include "sergeii.h"
+#include "invitee.h"
 #ifdef MPI
 #include "mpi_boot.h"
 #endif
@@ -265,7 +265,7 @@ void PhyTime_XML(char *xml_file)
               s = To_Upper_String(n_r -> child -> value);
 	      do
 		{
-                  strcpy(io -> in_align_file, "sergeii"); 
+                  strcpy(io -> in_align_file, "invitee"); 
 		  strcpy(io -> data[i] -> name, n_r -> child -> attr -> value);
 		  /* strcpy(io -> data[i] -> state, To_Upper_String(n_r -> child -> value)); */
                   strcpy(io -> data[i] -> state, s);
