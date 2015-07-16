@@ -5,7 +5,6 @@
     <instance id="T1" init.tree="bionj" optimise.tree="no"/> 
   </topology>
   
-
   <!-- Four rate matrices, read from files -->
   <ratematrices id="RM1"> 
     <instance id="M1" model="customaa" ratematrix.file="../examples/lg4x/X1.mat"/> 
@@ -36,19 +35,29 @@
     <instance id="F4" aa.freqs="model"/>
   </equfreqs>
 
-
   <!-- One vector of branch lengths -->
   <branchlengths id="BL1" >
     <instance id="L1" optimise.lens="yes"/>
   </branchlengths>
+  
+<!-- *_- -_- -_- -_- -_- -_- -_- -_- -_- -_* -->
+<!-- Below this line some modification by users are absolutly needed hier the model is properly defined-->
 
-
-  <!-- Mixture model assemblage -->
+ <!-- Mixture model assemblage -->
+ <!-- Multiplicate this line block to use a partition Structural Model on different file 1 by partition
+ A partionelem is organise as follow
+  mixtureelem list = Topology always identical for each cathegory
+  mixtureelem list = Matrix used for each cathegory
+  mixtureelem list = Equilibrium frequencies vector used for each cathegory
+  mixtureelem list = Freerate model of variation of rates across sites
+  mixtureelem list = Branch Length (Like topology always identical for each cathegory in a partitionelem) // TODO need to be precised
+ -->
+ 
   <partitionelem id="partition1" file.name="../examples/proteic" data.type="aa" interleaved="yes">
-    <mixtureelem list="T1, T1, T1, T1"/>
-    <mixtureelem list="M1, M2, M3, M4"/>
-    <mixtureelem list="F1, F2, F3, F4"/>
-    <mixtureelem list="R1, R2, R3, R4"/>
+	<mixtureelem list="T1, T1, T1, T1"/>
+	<mixtureelem list="M1, M2, M3, M4"/>
+	<mixtureelem list="F1, F2, F3, F4"/>
+	<mixtureelem list="R1, R2, R3, R4"/>   
     <mixtureelem list="L1, L1, L1, L1"/>
   </partitionelem>
 
