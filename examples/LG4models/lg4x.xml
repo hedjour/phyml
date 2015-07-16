@@ -7,10 +7,10 @@
   
   <!-- Four rate matrices, read from files -->
   <ratematrices id="RM1"> 
-    <instance id="M1" model="customaa" ratematrix.file="../examples/lg4x/X1.mat"/> 
-    <instance id="M2" model="customaa" ratematrix.file="../examples/lg4x/X2.mat"/> 
-    <instance id="M3" model="customaa" ratematrix.file="../examples/lg4x/X3.mat"/> 
-    <instance id="M4" model="customaa" ratematrix.file="../examples/lg4x/X4.mat"/> 
+    <instance id="M1" model="customaa" ratematrix.file="../examples/LG4models/X1.mat"/> 
+    <instance id="M2" model="customaa" ratematrix.file="../examples/LG4models/X2.mat"/> 
+    <instance id="M3" model="customaa" ratematrix.file="../examples/LG4models/X3.mat"/> 
+    <instance id="M4" model="customaa" ratematrix.file="../examples/LG4models/X4.mat"/> 
   </ratematrices>
   
   <!-- Freerate model of variation of rates across sites -->
