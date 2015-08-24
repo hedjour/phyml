@@ -25,6 +25,8 @@ make;
 //////////////////////////////////////////////////////////////////////////
 //                    You have cloned PhyML from GitHub                 //
 //////////////////////////////////////////////////////////////////////////
+If it is your first compilation type the following commands as root:
+aptitude install gcc pkg-config
 
 To install PhyML, type the following command:
 ./confphy;
