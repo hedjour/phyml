@@ -91,8 +91,8 @@ static inline int isinf_ld (long double x) { return isnan (x - x); }
 #define RR_MIN 0.01
 #define RR_MAX 200.0
 
-#define MIGREP_UNIFORM 0
-#define MIGREP_NORMAL  1
+#define PHYREX_UNIFORM 0
+#define PHYREX_NORMAL  1
 
 #define MCMC_MOVE_RANDWALK_UNIFORM       0
 #define MCMC_MOVE_LOG_RANDWALK_UNIFORM   1
@@ -1478,21 +1478,21 @@ typedef struct __Tmcmc {
   int num_move_geo_dum;
   int num_move_geo_updown_tau_lbda;
   int num_move_geo_updown_lbda_sigma;
-  int num_move_migrep_lbda;
-  int num_move_migrep_mu;
-  int num_move_migrep_rad;
-  int num_move_migrep_indel_disk;
-  int num_move_migrep_move_disk_ct;
-  int num_move_migrep_move_disk_ud;
-  int num_move_migrep_swap_disk;
-  int num_move_migrep_indel_hit;
-  int num_move_migrep_move_ldsk;
-  int num_move_migrep_spr;
-  int num_move_migrep_scale_times;
-  int num_move_migrep_ldscape_lim;
-  int num_move_migrep_sigsq;
-  int num_move_migrep_sim;
-  int num_move_migrep_traj;
+  int num_move_phyrex_lbda;
+  int num_move_phyrex_mu;
+  int num_move_phyrex_rad;
+  int num_move_phyrex_indel_disk;
+  int num_move_phyrex_move_disk_ct;
+  int num_move_phyrex_move_disk_ud;
+  int num_move_phyrex_swap_disk;
+  int num_move_phyrex_indel_hit;
+  int num_move_phyrex_move_ldsk;
+  int num_move_phyrex_spr;
+  int num_move_phyrex_scale_times;
+  int num_move_phyrex_ldscape_lim;
+  int num_move_phyrex_sigsq;
+  int num_move_phyrex_sim;
+  int num_move_phyrex_traj;
 
   int nd_t_digits;
   int *monitor;
@@ -1706,7 +1706,7 @@ typedef struct __Migrep_Model{
   struct __Geo_Coord            *lim; // max longitude and lattitude (the min are both set to zero)                       
 
   phydbl                  sampl_area;
-}t_migrep_mod;
+}t_phyrex_mod;
 
 /*!********************************************************/
 
@@ -2059,8 +2059,8 @@ phydbl Nucleotide_Diversity(calign *data);
 #include "geo.h"
 #endif
 
-#ifdef MIGREP
-#include "migrep.h"
+#ifdef PHYREX
+#include "phyrex.h"
 #endif
 
 #ifdef MPI
