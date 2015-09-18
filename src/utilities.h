@@ -26,6 +26,7 @@ the GNU public licence. See http://www.opensource.org for details.
 #include <limits.h>
 #include <errno.h>
 #include <float.h>
+#include <assert.h>
 #include <stdbool.h>
 
 extern int n_sec1;
@@ -1097,6 +1098,7 @@ typedef struct __Option { /*! mostly used in 'help.c' */
   char                    **alphabet;
   int                         codpos;
   int                         mutmap;
+  int                        use_xml;
 
   char              **long_tax_names;
   char             **short_tax_names;
@@ -1495,6 +1497,8 @@ typedef struct __Tmcmc {
   int num_move_phyrex_traj;
   int num_move_phyrex_lbda_times;
   int num_move_phyrex_ldsk_given_disk;
+  int num_move_phyrex_multi_traj;
+  int num_move_phyrex_flip;
 
   int nd_t_digits;
   int *monitor;

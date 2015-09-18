@@ -3931,6 +3931,7 @@ option *Get_Input(int argc, char **argv)
 #else
   putchar('\n');
 
+
   switch (argc)
     {
     case 1:
@@ -3938,15 +3939,13 @@ option *Get_Input(int argc, char **argv)
         Launch_Interface(io);
         break;
       }
-      /*
-        case 2:
-        Usage();
-        break;
-      */
     default:
-      rv = Read_Command_Line(io,argc,argv);
+      {
+        rv = Read_Command_Line(io,argc,argv);
+      }
     }
 #endif
+
   
   if(rv) return io;
   else   return NULL;
@@ -4545,11 +4544,11 @@ void Print_Data_Structure(int final, FILE *fp, t_tree *mixt_tree)
 //////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////
 
-void PhyML_XML(char *xml_filename)
+option *PhyML_XML(char *xml_filename)
 {
   FILE *fp;
   xml_node *root,*p_elem,*m_elem,*parent,*instance;
-  option *io;
+  option *io,*dum;
   void *buff;
   t_mod *mod,*iomod;
   t_tree *tree,*mixt_tree,*root_tree;
@@ -4609,6 +4608,10 @@ void PhyML_XML(char *xml_filename)
   ori_lens_var     = NULL;
   ori_lens_var_old = NULL;
   first            = YES;
+
+
+  dum = (option *)mCalloc(1,sizeof(option));
+  dum->use_xml = YES;
 
   // Make sure there are no duplicates in node's IDs
   XML_Check_Duplicate_ID(root);
@@ -4708,7 +4711,24 @@ void PhyML_XML(char *xml_filename)
         }
     }
   
-  
+  s = XML_Get_Attribute_Value(p_elem,"quiet");
+  if(s)
+    {
+      select = XML_Validate_Attr_Int(s,6,
+                                     "true","yes","y",
+                                     "false","no","n");
+      if(select < 3) io->quiet = YES;
+    }
+
+  s = XML_Get_Attribute_Value(p_elem,"memory.check");
+  if(s)
+    {
+      select = XML_Validate_Attr_Int(s,6,
+                                     "true","yes","y",
+                                     "false","no","n");
+      if(select >= 3) io->mem_question = NO;
+    }
+
   /*! Read all partitionelem nodes and mixturelem nodes in each of them
    */
   do
@@ -5807,6 +5827,8 @@ void PhyML_XML(char *xml_filename)
   Free(class_num);
 
   fclose(fp);
+
+  return(dum);
 }
 
 //////////////////////////////////////////////////////////////

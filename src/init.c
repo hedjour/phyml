@@ -566,6 +566,7 @@ void Set_Defaults_Input(option* io)
   io->mutmap                     = NO;
   io->state_len                  = 1;
   io->ancestral                  = NO;
+  io->use_xml                    = NO;
 #ifdef BEAGLE
   io->beagle_resource            = 0;
 #endif
@@ -3432,7 +3433,7 @@ void PHYREX_Init_Migrep_Mod(t_phyrex_mod *t, int n_dim, phydbl max_lat, phydbl m
   t->lbda             = 1.E-0;
   t->min_lbda         = 1.E-6;
   t->max_lbda         = 1.E+2;
-  t->prior_param_lbda = 10.0;
+  t->prior_param_lbda = 1.0;
 
   t->mu               = 0.300;
   t->min_mu           = 0.001;
@@ -3440,9 +3441,9 @@ void PHYREX_Init_Migrep_Mod(t_phyrex_mod *t, int n_dim, phydbl max_lat, phydbl m
   t->prior_param_mu   = 1.000;
 
   t->min_rad           = 0.0;
-  t->max_rad           = 0.5*(max_lat+max_lon);
+  t->max_rad           = 0.25*(max_lat+max_lon);
   t->rad               = .10*(max_lat+max_lon);
-  t->prior_param_rad   = 1.0;
+  t->prior_param_rad   = 0.5;
   t->update_rad        = NO;
 
   t->min_sigsq         = 0.0;
