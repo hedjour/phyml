@@ -1,8 +1,8 @@
-<phyml run.id="lg4x" output.file="lg4x.tests" branch.test="no">
+<phyml run.id="lg4x" output.file="lg4x.tests" branch.test="aLRT">
 
   <!-- Tree topology: start with BioNJ and then SPRs -->
   <topology> 
-    <instance id="T1" init.tree="bionj" optimise.tree="no"/> 
+    <instance id="T1" init.tree="bionj" optimise.tree="yes" search="NNI"/>
   </topology>
   
   <!-- Four rate matrices, read from files -->
@@ -40,18 +40,18 @@
     <instance id="L1" optimise.lens="yes"/>
   </branchlengths>
   
-<!-- *_- -_- -_- -_- -_- -_- -_- -_- -_- -_* -->
-<!-- Below this line some modification by users are absolutly needed hier the model is properly defined-->
-
- <!-- Mixture model assemblage -->
- <!-- Multiplicate this line block to use a partition Structural Model on different file 1 by partition
- A partionelem is organise as follow
-  mixtureelem list = Topology always identical for each cathegory
-  mixtureelem list = Matrix used for each cathegory
-  mixtureelem list = Equilibrium frequencies vector used for each cathegory
-  mixtureelem list = Freerate model of variation of rates across sites
-  mixtureelem list = Branch Length (Like topology always identical for each cathegory in a partitionelem) // TODO need to be precised
- -->
+	<!-- *_- -_- -_- -_- -_- -_- -_- -_- -_- -_* -->
+	<!-- Below this line some modification by users are absolutely needed hier the model is properly defined-->
+	
+	<!-- Mixture model assemblage -->
+	<!-- Duplicate this line block to use a partition Structural Model on different file 1 by partition
+	A partionelem is organised as follow
+	mixtureelem list = Topology always identical for each category
+	mixtureelem list = Matrix used for each category
+	mixtureelem list = Equilibrium frequencies vector used for each category
+	mixtureelem list = Free rates model of variation of rates across sites
+	mixtureelem list = Branch Length (Like topology always identical for each category in a partitionelem) // TODO need to be precised
+	-->
  
   <partitionelem id="partition1" file.name="../examples/proteic" data.type="aa" interleaved="yes">
 	<mixtureelem list="T1, T1, T1, T1"/>

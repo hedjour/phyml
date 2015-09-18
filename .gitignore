@@ -30,3 +30,7 @@
 
 #Memo file
 memo.sh
+
+#source de pb
+Makefile.in
+configure
