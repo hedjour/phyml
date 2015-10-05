@@ -1497,8 +1497,7 @@ typedef struct __Tmcmc {
   int num_move_phyrex_traj;
   int num_move_phyrex_lbda_times;
   int num_move_phyrex_ldsk_given_disk;
-  int num_move_phyrex_multi_traj;
-  int num_move_phyrex_flip;
+  int num_move_phyrex_indel_disk_serial;
 
   int nd_t_digits;
   int *monitor;
@@ -1669,7 +1668,7 @@ typedef struct __Phylogeo{
   phydbl            min_dum;
   phydbl            max_dum;
 
-
+  
 }t_geo;
 
 /*!********************************************************/
@@ -1707,6 +1706,7 @@ typedef struct __Migrep_Model{
   phydbl               c_ln_prior_mu; // current value of log prior for the prior on mu
   phydbl            c_ln_prior_sigsq; // current value of log prior for the prior on sigsq=4.pi.lbda.mu.rad^4
 
+  int                    safe_phyrex;
   phydbl             soft_bound_area;
 
   struct __Geo_Coord            *lim; // max longitude and lattitude (the min are both set to zero)                       

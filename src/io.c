@@ -3319,6 +3319,7 @@ void Read_Qmat(phydbl *daa, phydbl *pi, FILE *fp)
   phydbl sum;
   double val;
 
+  assert(fp);
   rewind(fp);
 
   for(i=1;i<20;i++)
@@ -4157,6 +4158,9 @@ void Print_Data_Structure(int final, FILE *fp, t_tree *mixt_tree)
   if(final == YES)
     PhyML_Fprintf(fp,"\n. Final log-likelihood: %f",mixt_tree->c_lnL);
 
+  r_mat_weight_sum = MIXT_Get_Sum_Chained_Scalar_Dbl(mixt_tree->next->mod->r_mat_weight);
+  e_frq_weight_sum = MIXT_Get_Sum_Chained_Scalar_Dbl(mixt_tree->next->mod->e_frq_weight);
+
   do
     {
       int class = 0;
@@ -4187,15 +4191,12 @@ void Print_Data_Structure(int final, FILE *fp, t_tree *mixt_tree)
         }
       PhyML_Fprintf(fp,"\n. Relative average rate:\t\t%12f",mixt_tree->mod->br_len_mult->v);
 
-      
-      r_mat_weight_sum = MIXT_Get_Sum_Chained_Scalar_Dbl(mixt_tree->next->mod->r_mat_weight);
-      e_frq_weight_sum = MIXT_Get_Sum_Chained_Scalar_Dbl(mixt_tree->next->mod->e_frq_weight);
-
+     
       tree = mixt_tree;
       do
         {
           if(tree->is_mixt_tree) tree = tree->next;
-          
+
           PhyML_Fprintf(fp,"\n");
           PhyML_Fprintf(fp,"\n. Mixture class %d",class+1);
           
@@ -4273,9 +4274,9 @@ void Print_Data_Structure(int final, FILE *fp, t_tree *mixt_tree)
                 {
                   strcpy(s,"Model");
                 }
-
-          PhyML_Fprintf(fp,"\n   Amino-acid freq.:\t\t%12s",s);
-
+              
+              PhyML_Fprintf(fp,"\n   Amino-acid freq.:\t\t%12s",s);
+              
               Free(s);
             }
 
@@ -5136,11 +5137,23 @@ option *PhyML_XML(char *xml_filename)
                               ds->next      = (t_ds *)mCalloc(1,sizeof(t_ds));
                               ds = ds->next;
                               ds->obj = (t_string *)(mod->custom_mod_string);
+
+
+                              /*! Create and connect the data structure n->ds->next to mod->fp_aa_rate_mat */
+                              ds->next      = (t_ds *)mCalloc(1,sizeof(t_ds));
+                              ds = ds->next;
+                              ds->obj = (FILE *)(mod->fp_aa_rate_mat);
+
+                              /*! Create and connect the data structure n->ds->next to mod->aa_rate_mat_file */
+                              ds->next      = (t_ds *)mCalloc(1,sizeof(t_ds));
+                              ds = ds->next;
+                              ds->obj = (t_string *)mod->aa_rate_mat_file;                              
                             }
                           else
                             {
                               /*! Connect to already extisting r_mat & kappa structs. */
                               t_ds *ds;
+                              
                               
                               ds = instance->ds;
                               Free(mod->r_mat);
@@ -5169,6 +5182,14 @@ option *PhyML_XML(char *xml_filename)
                               ds = ds->next;
                               Free_String(mod->custom_mod_string);
                               mod->custom_mod_string = (t_string *)ds->obj;
+
+                              ds = ds->next;
+                              mod->fp_aa_rate_mat = (FILE *)ds->obj;
+
+                              ds = ds->next;
+                              Free_String(mod->aa_rate_mat_file);
+                              mod->aa_rate_mat_file = (t_string *)ds->obj;
+
                             }
                         }
                       
@@ -5575,7 +5596,7 @@ option *PhyML_XML(char *xml_filename)
           {
             if(!mixt_tree->io->fp_in_tree)
               {
-                PhyML_Printf("\n== Err in file %s at line %d\n",__FILE__,__LINE__);
+                PhyML_Printf("\n== Err. in file %s at line %d\n",__FILE__,__LINE__);
                 Exit("\n");
               }
 
@@ -5911,6 +5932,7 @@ void Make_Ratematrice_From_XML_Node(xml_node *instance, option *io, t_mod *mod)
                                  "CUSTOMAA", //25
                                  "LG",       //26
                                  "AB" );     //27
+
 
   if(select < 9)
     {

@@ -153,7 +153,8 @@ int PHYREX_Main_Simulate(int argc, char *argv[])
   /* seed = 629; */
   /* seed = 1; */
   /* seed = 14493; */
-  seed = 13456;
+  /* seed = 15364; */
+  /* seed = 21414; */
 
   printf("\n. seed: %d",seed);
   srand(seed);
@@ -281,41 +282,41 @@ t_tree *PHYREX_Simulate(int n_otu, int n_sites, phydbl width, phydbl height, int
   PHYREX_Init_Migrep_Mod(mmod,n_dim,width,height);
 
 
-  do
-    {
-      /* Effective population size */
-      minNe = 100.; maxNe = 5000.;
-      Ne = Uni() * (maxNe - minNe) + minNe;
+  /* do */
+  /*   { */
+  /*     /\* Effective population size *\/ */
+  /*     minNe = 100.; maxNe = 5000.; */
+  /*     Ne = Uni() * (maxNe - minNe) + minNe; */
       
-      /* Neighborhood size */
-      max_neigh = 0.01*Ne; min_neigh = 0.001*Ne;
-      neigh = Uni()*(max_neigh - min_neigh)  + min_neigh;
-    }
-  while(neigh < 2.0);
+  /*     /\* Neighborhood size *\/ */
+  /*     max_neigh = 0.01*Ne; min_neigh = 0.001*Ne; */
+  /*     neigh = Uni()*(max_neigh - min_neigh)  + min_neigh; */
+  /*   } */
+  /* while(neigh < 2.0); */
   
-  /* Death parameter */
-  mmod->mu = 2./neigh;
+  /* /\* Death parameter *\/ */
+  /* mmod->mu = 2./neigh; */
 
-  /* Theta (radius) */
-  tree->mmod->rad = Uni()*(4.0 - 1.5) + 1.5;
+  /* /\* Theta (radius) *\/ */
+  /* tree->mmod->rad = Uni()*(4.0 - 1.5) + 1.5; */
 
-  mmod->sigsq = neigh / (4.*PI*Ne/area);
+  /* mmod->sigsq = neigh / (4.*PI*Ne/area); */
 
-  tree->mmod->lbda = area * mmod->sigsq / (4.*PI*tree->mmod->mu*POW(tree->mmod->rad,4));
+  /* tree->mmod->lbda = area * mmod->sigsq / (4.*PI*tree->mmod->mu*POW(tree->mmod->rad,4)); */
 
   
-  /* mmod->lbda  = 0.04; */
-  /* mmod->mu    = 0.16; */
-  /* mmod->rad   = 2.75; */
-  /* neigh       = 2./mmod->mu; */
-  /* mmod->sigsq = PHYREX_Update_Sigsq(tree); */
+  mmod->lbda  = 0.04;
+  mmod->mu    = 0.16;
+  mmod->rad   = 2.75;
+  neigh       = 2./mmod->mu;
+  mmod->sigsq = PHYREX_Update_Sigsq(tree);
 
   PhyML_Printf("\n. lbda: %G mu: %G sigsq: %G rad: %G neigh: %G N: %G",
                mmod->lbda,mmod->mu,mmod->sigsq,mmod->rad,neigh,area*neigh/(4*PI*mmod->sigsq));
   fflush(NULL);
 
-  /* PHYREX_Simulate_Backward_Core(YES,tree->disk,tree); */
-  mmod->sampl_area = PHYREX_Simulate_Forward_Core(n_sites,tree);
+  PHYREX_Simulate_Backward_Core(YES,tree->disk,tree);
+  /* mmod->sampl_area = PHYREX_Simulate_Forward_Core(n_sites,tree); */
     
   PHYREX_Ldsk_To_Tree(tree);  
 
@@ -924,181 +925,131 @@ int PHYREX_Is_In_Disk(t_geo_coord *coord, t_dsk *disk, t_phyrex_mod *mmod)
 phydbl PHYREX_Lk(t_tree *tree)
 {
   phydbl lnL;
-  phydbl log_mu,log_one_mu,log_dens_coal,log_lbda;
-  int i,j,n_inter,err;
-  short int was_hit, n_hit;
-  t_phyrex_mod *mmod;
+  phydbl log_lbda;
   t_dsk *disk;
-
-
-  mmod = tree->mmod;
   
-  disk = tree->disk;
-
-  assert(!disk->next);
-  assert(disk->prev);
+  assert(!tree->disk->next);
+  assert(tree->disk->prev);
   
   tree->mmod->c_lnL = 0.0;
-  log_mu            = LOG(mmod->mu);
-  log_one_mu        = LOG(1. - mmod->mu);  
-  log_lbda          = LOG(mmod->lbda);
-  lnL               = 0.0;
+  log_lbda          = LOG(tree->mmod->lbda);
 
   /* TO DO: create a proper PHYREX_LogPost() function */
-  mmod->c_lnL += PHYREX_LnPrior_Radius(tree);
-  mmod->c_lnL += PHYREX_LnPrior_Mu(tree);
-  mmod->c_lnL += PHYREX_LnPrior_Lbda(tree);
+  tree->mmod->c_lnL += PHYREX_LnPrior_Radius(tree);
+  tree->mmod->c_lnL += PHYREX_LnPrior_Mu(tree);
+  tree->mmod->c_lnL += PHYREX_LnPrior_Lbda(tree);
  
-  if(isinf(mmod->c_lnL) || isnan(mmod->c_lnL)) 
+  if(isinf(tree->mmod->c_lnL) || isnan(tree->mmod->c_lnL)) 
     {
-      mmod->c_lnL = UNLIKELY;
-      return mmod->c_lnL;
+      tree->mmod->c_lnL = UNLIKELY;
+      return tree->mmod->c_lnL;
     }
 
   PHYREX_Update_Lindisk_List(tree);
 
-  n_inter = 0;
+  disk = tree->disk->prev;
+  assert(disk);
   do
-    {      
-      /* PhyML_Printf("\n. Likelihood - disk %s has %d lindisk nodes [%f] rad: %f",disk->id,disk->n_ldsk_a,lnL,mmod->rad); */
-      /* fflush(NULL); */
-      
-      n_inter++;
-
-      lnL     = 0.0;
-      was_hit = NO;
-      n_hit   = 0;
-      
-      For(i,disk->n_ldsk_a)
-        {
-          /* printf("\n. %p %p %p %p %p %d",disk,disk->prev,disk->ldsk_a,disk->ldsk_a[i],disk->ldsk_a[i]->prev,disk->n_ldsk_a); fflush(NULL); */
-
-          was_hit = disk->ldsk_a[i]->prev->disk == disk->prev;
-          
-          if(PHYREX_Is_In_Ldscape(disk->ldsk_a[i],tree->mmod) == NO)
-            {
-              mmod->c_lnL = UNLIKELY;
-              return(UNLIKELY);
-            }
-
-          if(was_hit == YES) n_hit++;
-          
-          if(was_hit == YES && disk->prev->ldsk == NULL)
-            {
-              PhyML_Printf("\n== disk: %s disk->prev: %s",disk->id,disk->prev->id);
-              Generic_Exit(__FILE__,__LINE__,__FUNCTION__);
-            }
-          
-          switch(mmod->name)
-            {
-            case PHYREX_UNIFORM:
-              {
-                if(PHYREX_Is_In_Disk(disk->ldsk_a[i]->coord,disk->prev,mmod) == YES) /* 'Departure' point is in disk */
-                  {
-                    if(was_hit == YES) /* was hit */
-                      {
-                        if(PHYREX_Is_In_Disk(disk->prev->ldsk->coord,disk->prev,mmod) == YES) /* 'Arrival' point is in disk */
-                          {
-                            lnL += log_mu;
-                          }
-                        else /* Landed outside the disk */
-                          {
-                            mmod->c_lnL = UNLIKELY;
-                            return UNLIKELY;
-                          }
-                      }
-                    else /* was not hit */
-                      {
-                        lnL += log_one_mu;
-                      }
-                  }
-                else
-                  {
-                    if(was_hit == YES)
-                      {
-                        mmod->c_lnL = UNLIKELY;
-                        return UNLIKELY;
-                      }
-                  }                                
-                break;
-              }
-              
-            case PHYREX_NORMAL:
-              {
-                phydbl log_prob_hit;
-                
-                log_prob_hit = log_mu;
-                For(j,mmod->n_dim) log_prob_hit += -POW(disk->ldsk_a[i]->coord->lonlat[j] - disk->prev->centr->lonlat[j],2)/(2.*POW(mmod->rad,2));
-                
-                if(was_hit == YES)
-                  {
-                    lnL += log_prob_hit;
-                  }
-                else
-                  {
-                    lnL += LOG(1. - EXP(log_prob_hit));
-                  }
-                break;
-              }
-              
-            default:
-              {
-                Generic_Exit(__FILE__,__LINE__,__FUNCTION__);
-              }
-            }
-        }
-
-      /* a hit occurred */
-      if(n_hit >= 1) 
-        {
-          switch(mmod->name)
-            {
-            case PHYREX_UNIFORM: 
-              {
-                log_dens_coal = PHYREX_Log_Dunif_Rectangle_Overlap(disk->prev->ldsk,disk->prev,mmod);
-                lnL += log_dens_coal;
-                break;
-              }
-            case PHYREX_NORMAL:
-              {
-                err = NO;
-                log_dens_coal = 0.0;
-                For(j,mmod->n_dim) log_dens_coal += Log_Dnorm_Trunc(disk->prev->ldsk->coord->lonlat[j],
-                                                                    disk->prev->centr->lonlat[j],
-                                                                    mmod->rad,
-                                                                    0.0,
-                                                                    mmod->lim->lonlat[j],&err);
-                lnL += log_dens_coal;
-                break;
-              }
-            }
-        }
-
-      /* Likelihood for the disk center */
-      For(i,disk->mmod->n_dim) lnL -= LOG(disk->prev->mmod->lim->lonlat[i]);
-
-      lnL += log_lbda - mmod->lbda * FABS(disk->time - disk->prev->time);
-
-      mmod->c_lnL += lnL;
-      
+    {
+      lnL = PHYREX_Lk_Core(disk,tree);
+      lnL += log_lbda - tree->mmod->lbda * FABS(disk->time - disk->next->time);
+      tree->mmod->c_lnL += lnL;
+      disk->c_lnL = tree->mmod->c_lnL;
       disk = disk->prev;
-      
-      disk->c_lnL = mmod->c_lnL;
-
-
-      if(!disk->prev) break;
     }
-  while(1);
-  
-  /* lnL += (n_inter)*LOG(mmod->lbda) + mmod->lbda*disk->time; */
-  /* mmod->c_lnL = lnL; */
-  /* mmod->c_lnL = 0.0; */
+  while(disk);
 
-  if(isinf(mmod->c_lnL) || isnan(mmod->c_lnL)) mmod->c_lnL = UNLIKELY;
+  if(isinf(tree->mmod->c_lnL) || isnan(tree->mmod->c_lnL)) tree->mmod->c_lnL = UNLIKELY;
 
-  return(mmod->c_lnL);
+  return(tree->mmod->c_lnL);
 }
 
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+
+phydbl PHYREX_Lk_Core(t_dsk *disk, t_tree *tree)
+{
+  phydbl lnL,log_prob_hit,log_mu,log_dens_coal;
+  int was_hit,i,j,k,err;
+  phydbl two_theta_two;
+
+  two_theta_two = 2.*POW(tree->mmod->rad,2);
+  lnL           = 0.0;
+  log_mu        = LOG(tree->mmod->mu);
+  was_hit       = (disk->ldsk != NULL);
+
+  For(i,disk->n_ldsk_a)
+    {
+      if(PHYREX_Is_In_Ldscape(disk->ldsk_a[i],tree->mmod) == NO) return(UNLIKELY);     
+
+      if(was_hit && disk->ldsk_a[i] == disk->ldsk)
+        {
+          For(k,disk->ldsk->n_next)
+            {              
+              log_prob_hit = log_mu;
+              For(j,tree->mmod->n_dim)
+                log_prob_hit += -POW(disk->ldsk->next[k]->coord->lonlat[j] - disk->centr->lonlat[j],2)/two_theta_two;
+
+              lnL += log_prob_hit;
+            }
+        }
+      else
+        {
+          log_prob_hit = log_mu;
+          For(j,tree->mmod->n_dim)
+            log_prob_hit += -POW(disk->ldsk_a[i]->coord->lonlat[j] - disk->centr->lonlat[j],2)/two_theta_two;
+          
+          lnL += LOG(1. - EXP(log_prob_hit));
+        }
+    }
+
+  /* a hit occurred */
+  if(was_hit == TRUE)
+    {
+      err = NO;
+      log_dens_coal = 0.0;
+      For(j,tree->mmod->n_dim) log_dens_coal += Log_Dnorm_Trunc(disk->ldsk->coord->lonlat[j],
+                                                                disk->centr->lonlat[j],
+                                                                tree->mmod->rad,
+                                                                0.0,
+                                                                tree->mmod->lim->lonlat[j],&err);
+      lnL += log_dens_coal;
+    }
+
+  /* Likelihood for the disk center */
+  For(i,disk->mmod->n_dim) lnL -= LOG(tree->mmod->lim->lonlat[i]);
+  
+  return(lnL);
+}
+
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+
+phydbl PHYREX_Lk_Range(t_dsk *young, t_dsk *old, t_tree *tree)
+{
+  t_dsk *disk;
+  phydbl lnL,log_lbda;
+  
+  assert(young);
+  assert(young->next);
+  
+  log_lbda = LOG(tree->mmod->lbda);
+
+  lnL  = 0.0;
+  disk = young;
+  assert(disk);
+  do
+    {
+      PHYREX_Update_Lindisk_List_Core(disk,tree);
+      lnL += PHYREX_Lk_Core(disk,tree);
+      lnL += log_lbda - tree->mmod->lbda * FABS(disk->time - disk->next->time);
+      if(disk == old) break;
+      disk = disk->prev;
+    }
+  while(disk);
+
+  return(lnL);
+}
 //////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////
 
@@ -1183,14 +1134,14 @@ phydbl *PHYREX_MCMC(t_tree *tree)
   true_height = PHYREX_Tree_Height(tree);
 
   /* Starting parameter values */
-  tree->mmod->lbda = Uni()*(0.5 - 0.01) + 0.01;
-  tree->mmod->mu   = Uni()*(0.6 - 0.3) + 0.3;
-  tree->mmod->rad  = Uni()*(4.0 - 2.0) + 2.0;
-  PHYREX_Update_Sigsq(tree);
-
   /* tree->mmod->lbda = Uni()*(0.5 - 0.2) + 0.2; */
-  /* tree->mmod->mu   = Uni()*(0.3 - 0.1) + 0.1; */
-  /* tree->mmod->rad  = Uni()*(2.0 - 1.0) + 1.0; */
+  /* tree->mmod->mu   = Uni()*(0.6 - 0.3) + 0.3; */
+  /* tree->mmod->rad  = Uni()*(4.0 - 2.0) + 2.0; */
+  /* PHYREX_Update_Sigsq(tree); */
+
+  /* tree->mmod->lbda = Uni()*(0.50 - 0.20) + 0.20; */
+  /* tree->mmod->mu   = Uni()*(0.30 - 0.05) + 0.05; */
+  /* tree->mmod->rad  = Uni()*(3.00 - 1.00) + 1.00; */
   /* PHYREX_Update_Sigsq(tree); */
 
   /* MCMC_Randomize_Rate_Across_Sites(tree); */
@@ -1221,7 +1172,7 @@ phydbl *PHYREX_MCMC(t_tree *tree)
   fflush(NULL);
 
 
-  PhyML_Fprintf(fp_stats,"\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+  PhyML_Fprintf(fp_stats,"\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
                 "sample",
                 "lnP",
                 "alnL",
@@ -1253,14 +1204,13 @@ phydbl *PHYREX_MCMC(t_tree *tree)
                 "accMoveCtr",
                 "accLbdaTimes",
                 "accLdskDisk",
-                "accMultiTraj",
                 "tuneLbda",
                 "tuneRad",
                 "tuneMu");
 
   For(i,mcmc->n_moves) tree->mcmc->start_ess[i] = YES;
 
-  mcmc->use_data   = YES; 
+  mcmc->use_data   = NO; 
   mcmc->always_yes = NO;
   move             = -1;
   do
@@ -1282,20 +1232,23 @@ phydbl *PHYREX_MCMC(t_tree *tree)
       assert(!(move == tree->mcmc->n_moves));
 
       
-      if(!strcmp(tree->mcmc->move_name[move],"phyrex_lbda"))
-        MCMC_PHYREX_Lbda(tree);
+      /* if(!strcmp(tree->mcmc->move_name[move],"phyrex_lbda")) */
+      /*   MCMC_PHYREX_Lbda(tree); */
 
-      if(!strcmp(tree->mcmc->move_name[move],"phyrex_mu"))
-        MCMC_PHYREX_Mu(tree);
+      /* if(!strcmp(tree->mcmc->move_name[move],"phyrex_mu")) */
+      /*   MCMC_PHYREX_Mu(tree); */
 
-      if(!strcmp(tree->mcmc->move_name[move],"phyrex_rad"))
-        MCMC_PHYREX_Radius(tree);
+      /* if(!strcmp(tree->mcmc->move_name[move],"phyrex_rad")) */
+      /*   MCMC_PHYREX_Radius(tree); */
 
       /* if(!strcmp(tree->mcmc->move_name[move],"phyrex_sigsq")) */
       /*   MCMC_PHYREX_Sigsq(tree); */
 
       if(!strcmp(tree->mcmc->move_name[move],"phyrex_indel_disk"))
         MCMC_PHYREX_Indel_Disk(tree);
+
+      if(!strcmp(tree->mcmc->move_name[move],"phyrex_indel_hit"))
+        MCMC_PHYREX_Indel_Hit(tree);
 
       if(!strcmp(tree->mcmc->move_name[move],"phyrex_move_disk_ct"))
         MCMC_PHYREX_Move_Disk_Centre(tree);
@@ -1306,8 +1259,6 @@ phydbl *PHYREX_MCMC(t_tree *tree)
       if(!strcmp(tree->mcmc->move_name[move],"phyrex_swap_disk"))
         MCMC_PHYREX_Swap_Disk(tree);
 
-      if(!strcmp(tree->mcmc->move_name[move],"phyrex_indel_hit"))
-        MCMC_PHYREX_Indel_Hit(tree);
 
       if(!strcmp(tree->mcmc->move_name[move],"phyrex_move_ldsk"))
         MCMC_PHYREX_Move_Ldsk(tree);
@@ -1324,17 +1275,14 @@ phydbl *PHYREX_MCMC(t_tree *tree)
       if(!strcmp(tree->mcmc->move_name[move],"phyrex_traj"))
         MCMC_PHYREX_Lineage_Traj(tree);
 
-      if(!strcmp(tree->mcmc->move_name[move],"phyrex_multi_traj"))
-        MCMC_PHYREX_Multi_Traj(tree);
-
       if(!strcmp(tree->mcmc->move_name[move],"phyrex_lbda_times"))
         MCMC_PHYREX_Lbda_Times(tree);
 
       if(!strcmp(tree->mcmc->move_name[move],"phyrex_ldsk_given_disk"))
         MCMC_PHYREX_Ldsk_Given_Disk(tree);
 
-      if(!strcmp(tree->mcmc->move_name[move],"phyrex_flip"))
-        MCMC_PHYREX_Flip_Events(tree);
+      if(!strcmp(tree->mcmc->move_name[move],"phyrex_indel_disk_serial"))
+        MCMC_PHYREX_Indel_Disk_Serial(tree);
 
       if(!strcmp(tree->mcmc->move_name[move],"kappa"))
         MCMC_Kappa(tree);
@@ -1348,6 +1296,11 @@ phydbl *PHYREX_MCMC(t_tree *tree)
       tree->mcmc->run++;
       MCMC_Get_Acc_Rates(tree->mcmc);
       
+
+      /* printf("\n. %10d %30s %f",tree->mcmc->run,tree->mcmc->move_name[move],tree->mmod->c_lnL); */
+      /* printf("\n. %10d %30s %f",tree->mcmc->run,tree->mcmc->move_name[move],PHYREX_Lk(tree)); */
+
+
       if(!(tree->mcmc->run%tree->mcmc->sample_interval))
         {
           /* Lk(NULL,tree); */
@@ -1360,7 +1313,7 @@ phydbl *PHYREX_MCMC(t_tree *tree)
           disk = tree->disk;
           while(disk->prev) disk = disk->prev;
 
-          PhyML_Fprintf(fp_stats,"\n%6d\t%9.1f\t%9.1f\t%9.1f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6d\t%6d\t%6d\t%8.1f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%G\t%G\t%G",
+          PhyML_Fprintf(fp_stats,"\n%6d\t%9.1f\t%9.1f\t%9.1f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6d\t%6d\t%6d\t%8.1f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%6.2f\t%G\t%G\t%G",
                         tree->mcmc->run,
                         tree->c_lnL+tree->mmod->c_lnL,
                         tree->c_lnL,
@@ -1392,7 +1345,6 @@ phydbl *PHYREX_MCMC(t_tree *tree)
                         tree->mcmc->acc_rate[tree->mcmc->num_move_phyrex_move_disk_ct],
                         tree->mcmc->acc_rate[tree->mcmc->num_move_phyrex_lbda_times],
                         tree->mcmc->acc_rate[tree->mcmc->num_move_phyrex_ldsk_given_disk],
-                        tree->mcmc->acc_rate[tree->mcmc->num_move_phyrex_multi_traj],
                         tree->mcmc->tune_move[tree->mcmc->num_move_phyrex_lbda],
                         tree->mcmc->tune_move[tree->mcmc->num_move_phyrex_rad],
                         tree->mcmc->tune_move[tree->mcmc->num_move_phyrex_mu]);
@@ -2489,14 +2441,14 @@ phydbl PHYREX_LnPrior_Lbda(t_tree *tree)
   if(tree->mmod->lbda < tree->mmod->min_lbda) return UNLIKELY;
   if(tree->mmod->lbda > tree->mmod->max_lbda) return UNLIKELY;
 
-  tree->mmod->c_ln_prior_lbda =
-    LOG(tree->mmod->prior_param_lbda) -
-    tree->mmod->prior_param_lbda*tree->mmod->lbda;
+  /* tree->mmod->c_ln_prior_lbda = */
+  /*   LOG(tree->mmod->prior_param_lbda) - */
+  /*   tree->mmod->prior_param_lbda*tree->mmod->lbda; */
 
-  tree->mmod->c_ln_prior_lbda -= LOG(EXP(-tree->mmod->prior_param_lbda*tree->mmod->min_lbda)-
-                                     EXP(-tree->mmod->prior_param_lbda*tree->mmod->max_lbda));
+  /* tree->mmod->c_ln_prior_lbda -= LOG(EXP(-tree->mmod->prior_param_lbda*tree->mmod->min_lbda)- */
+  /*                                    EXP(-tree->mmod->prior_param_lbda*tree->mmod->max_lbda)); */
 
-  /* tree->mmod->c_ln_prior_lbda = -LOG(tree->mmod->max_lbda - tree->mmod->min_lbda);; */
+  tree->mmod->c_ln_prior_lbda = -LOG(tree->mmod->max_lbda - tree->mmod->min_lbda);;
 
   return(tree->mmod->c_ln_prior_lbda);
 }
@@ -3786,3 +3738,137 @@ int PHYREX_Path_Len(t_ldsk *beg, t_ldsk *end)
 /*////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////*/
 
+void PHYREX_Print_Disk_Lk(t_tree *tree)
+{
+  t_dsk *disk;
+
+  PHYREX_Update_Lindisk_List(tree);
+
+  disk = tree->disk->prev;
+
+  do
+    {
+      PhyML_Printf("\n. Disk: %p time: %12f lk: %12f cumlk: %12f",
+                   disk,
+                   disk->time,
+                   PHYREX_Lk_Core(disk,tree),
+                   disk->c_lnL);
+      
+      disk = disk->prev;
+    }
+  while(disk->prev);
+  
+}
+
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+
+t_ldsk *PHYREX_Find_Lca_Pair_Of_Ldsk(t_ldsk *n1, t_ldsk *n2, t_tree *tree)
+{
+  t_ldsk **list1, **list2, *lca;
+  int len1, len2;
+
+  assert(n1);
+  assert(n2);
+
+  if(n1 == n2) return(n1);
+
+  PHYREX_Get_List_Of_Ancestors(n1,&list1,&len1,tree);
+  PHYREX_Get_List_Of_Ancestors(n2,&list2,&len2,tree);
+  
+  len1 = len1-1;
+  len2 = len2-1;
+
+  /* printf("\n. len1: %d len2: %d",len1,len2); fflush(NULL); */
+  /* printf("\n. %f %f %d %d [%f %f]", */
+  /*        list1[1]->disk->time, */
+  /*        list2[1]->disk->time, */
+  /*        len1,len2, */
+  /*        n1->disk->time, */
+  /*        n2->disk->time); */
+         
+  assert(list1[len1] == list2[len2]);
+
+
+  do
+    {
+      if((list1[len1] != list2[len2]) || (len1 < 0 || len2 < 0)) break;
+      len1--;
+      len2--;
+    }
+  while(len1 && len2);
+  
+
+  lca = list1[len1+1];
+
+  Free(list1);
+  Free(list2);
+  
+  assert(lca);
+
+  return(lca);
+  
+} 
+
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+
+void PHYREX_Get_List_Of_Ancestors(t_ldsk *start, t_ldsk ***list, int *len, t_tree *tree)
+{
+  int block,i;
+  t_ldsk *ldsk;
+
+  assert(start);
+  block = 100;
+
+  *list = (t_ldsk **)mCalloc(block,sizeof(t_ldsk *));
+  
+  ldsk = start;
+  i = 0;
+  do
+    {
+      (*list)[i] = ldsk;
+      if(!(i%block)) *list = (t_ldsk **)mRealloc(*list,i+block,sizeof(t_ldsk *));
+      i++;
+      ldsk = ldsk->prev;
+    }
+  while(ldsk);
+
+  (*len) = i;
+}
+
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+
+phydbl PHYREX_Dist_To_Lca(t_ldsk *d, t_ldsk *lca)
+{
+  return(FABS(d->disk->time - lca->disk->time));      
+}
+
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+
+phydbl PHYREX_Dist_Between_Two_Ldsk(t_ldsk *n1,  t_ldsk *n2, t_tree *tree)
+{
+  t_ldsk *lca;
+
+  lca = PHYREX_Find_Lca_Pair_Of_Ldsk(n1,n2,tree);
+
+  return(PHYREX_Dist_To_Lca(n1,lca)+PHYREX_Dist_To_Lca(n2,lca));
+}
+
+
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////*/

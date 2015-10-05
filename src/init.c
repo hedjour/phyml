@@ -1286,8 +1286,13 @@ void Init_Model(calign *data, t_mod *mod, option *io)
           } 
         case CUSTOMAA :
           {
+            if(mod->fp_aa_rate_mat == NULL)
+              {
+                PhyML_Printf("\n. Cannot open custom rate matrix file '%s'.\n",mod->aa_rate_mat_file->s); 
+                Exit("\n");
+              }
+
             Read_Qmat(mod->r_mat->qmat->v,mod->e_frq->pi->v,mod->fp_aa_rate_mat);
-	    Print_Qmat_AA(mod->r_mat->qmat->v,mod->e_frq->pi->v);
             if(mod->s_opt->opt_state_freq) For(i,mod->ns) mod->e_frq->pi->v[i] = data->b_frq[i];
 	    break;
 	  }
@@ -3422,10 +3427,11 @@ void PHYREX_Init_Disk_Event(t_dsk *t, int n_dim, t_phyrex_mod *mmod)
 
 void PHYREX_Init_Migrep_Mod(t_phyrex_mod *t, int n_dim, phydbl max_lat, phydbl max_lon)
 {
+  assert(n_dim == 2);
+
   t->name             = PHYREX_NORMAL;
   t->n_dim            = n_dim;
-  
-  if(n_dim != 2) Generic_Exit(__FILE__,__LINE__,__FUNCTION__);
+  t->safe_phyrex      = YES;
   
   t->lim->lonlat[0]   = max_lat;
   t->lim->lonlat[1]   = max_lon;
@@ -3433,7 +3439,7 @@ void PHYREX_Init_Migrep_Mod(t_phyrex_mod *t, int n_dim, phydbl max_lat, phydbl m
   t->lbda             = 1.E-0;
   t->min_lbda         = 1.E-6;
   t->max_lbda         = 1.E+2;
-  t->prior_param_lbda = 1.0;
+  t->prior_param_lbda = 5.0;
 
   t->mu               = 0.300;
   t->min_mu           = 0.001;
